@@ -133,3 +133,5 @@ ml-100k
 ctr
 lightning_logs
 *.zip
+proj_*/
+wandb/

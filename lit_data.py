@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
+from typing import Optional
 
 class BaseDataset(Dataset, ABC):
     @abstractmethod
@@ -36,13 +37,15 @@ class LitDataModule(pl.LightningDataModule):
         """
         self.dataset = dataset
         self.train_ratio = train_ratio
+        self.prepare_data_per_node = True
+        self._log_hyperparams = False
         self.dataloader_kwargs = {
             "batch_size": batch_size,
             "num_workers": num_workers,
             "prefetch_factor": prefetch_factor,
         }
 
-    def setup(self):
+    def setup(self, stage: Optional[str] = None):
         self.num_users = getattr(self.dataset, "num_users", None)
         self.num_items = getattr(self.dataset, "num_items", None)
         self.train_split, self.test_split = self.dataset.split(

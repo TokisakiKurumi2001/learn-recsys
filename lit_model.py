@@ -19,7 +19,8 @@ class LitModel(pl.LightningModule):
         self.model = model_class(**kwargs)
         self.lr = lr
         self.sparse = getattr(self.model, "sparse", False)
-        self.rmse = MeanSquaredError()
+        self.train_rmse = MeanSquaredError(False)
+        self.valid_rmse = MeanSquaredError(False)
 
     def configure_optimizers(self):
         if self.sparse:
@@ -30,7 +31,7 @@ class LitModel(pl.LightningModule):
     def get_loss(self, m_outputs, batch):
         raise NotImplementedError()
 
-    def update_metric(self, m_outputs, batch):
+    def update_metric(self, m_outputs, batch, partition):
         raise NotImplementedError()
 
     def forward(self, batch):
@@ -39,23 +40,21 @@ class LitModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         m_outputs = self(batch)
         loss = self.get_loss(m_outputs, batch)
+        self.log("train/loss", loss, sync_dist=True)
+        self.update_metric(m_outputs, batch, 'train')
         return loss
 
     def validation_step(self, batch, batch_idx):
         m_outputs = self(batch)
         loss = self.get_loss(m_outputs, batch)
-        self.update_metric(m_outputs, batch)
+        self.log("val/loss", loss, sync_dist=True)
+        self.update_metric(m_outputs, batch, 'valid')
         return loss
 
     def training_epoch_end(self, outputs):
-        avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
-        self.logger.experiment.add_scalar(
-            "train/loss", avg_loss, self.current_epoch)
+        self.log("train/rsme", self.train_rmse.compute(), on_epoch=True, sync_dist=True)
+        self.train_rmse.reset()
 
     def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack(outputs).mean()
-        self.logger.experiment.add_scalar(
-            "val/loss", avg_loss, self.current_epoch)
-        self.logger.experiment.add_scalar(
-            "val/rsme", self.rmse.compute(), self.current_epoch)
-        self.rmse.reset()
+        self.log("val/rsme", self.valid_rmse.compute(), on_epoch=True, sync_dist=True)
+        self.valid_rmse.reset()

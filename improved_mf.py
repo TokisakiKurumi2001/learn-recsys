@@ -80,7 +80,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--embedding_dims", type=int, default=30)
+    parser.add_argument("--embedding_dims", type=int, default=80)
     parser.add_argument("--batch_size", type=int, default=512)
     pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()

@@ -135,3 +135,4 @@ lightning_logs
 *.zip
 proj_*/
 wandb/
+models/

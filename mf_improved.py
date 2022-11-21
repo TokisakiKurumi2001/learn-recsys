@@ -52,8 +52,8 @@ class MatrixFactorization(nn.Module):
         self.genre_embedding = EmbeddingMulti(num_genres, embedding_dims, sparse=sparse)
         self.genre_bias = EmbeddingMulti(num_genres, 1, sparse=sparse)
 
-        # for param in self.parameters():
-        #     nn.init.normal_(param, std=0.01)
+        for param in self.parameters():
+            nn.init.normal_(param, std=0.01, mean=0.1)
 
     def forward(self, user_id, item_id, occupation, genre):
         Q = self.user_embedding(user_id)
@@ -93,19 +93,19 @@ def main(args):
         num_users=data.num_users, num_items=data.num_items, num_occupations=data.num_occupations, num_genres = data.num_genres, sparse=False
         )
     
-    # wandb_logger = WandbLogger(project="proj_dummy")
-    # wandb_logger = WandbLogger(name="occ_genre_b", project="proj_recsys")
-    # trainer = pl.Trainer.from_argparse_args(
-    #     args,
-    #     devices=[0],
-    #     accelerator="gpu",
-    #     strategy="ddp",
-    #     max_epochs=30,
-    #     logger=wandb_logger)
+    wandb_logger = WandbLogger(name="our3", project="proj_recsys")
+    trainer = pl.Trainer.from_argparse_args(
+        args,
+        devices=[0],
+        accelerator="gpu",
+        strategy="ddp",
+        max_epochs=30,
+        logger=wandb_logger)
 
-    # train_dataloader = data.train_dataloader()
-    # valid_dataloader = data.val_dataloader()
-    # trainer.fit(model=model, train_dataloaders=train_dataloader, val_dataloaders=valid_dataloader)
+    train_dataloader = data.train_dataloader()
+    valid_dataloader = data.val_dataloader()
+    trainer.fit(model=model, train_dataloaders=train_dataloader, val_dataloaders=valid_dataloader)
+    model.save_model("models/our3.pt")
 
 if __name__ == "__main__":
     parser = ArgumentParser()

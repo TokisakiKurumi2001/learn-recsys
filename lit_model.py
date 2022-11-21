@@ -22,6 +22,9 @@ class LitModel(pl.LightningModule):
         self.train_rmse = MeanSquaredError(False)
         self.valid_rmse = MeanSquaredError(False)
 
+    def save_model(self, path):
+        torch.save(self.model.state_dict(), path)
+
     def configure_optimizers(self):
         if self.sparse:
             return torch.optim.SparseAdam(self.parameters(), self.lr)

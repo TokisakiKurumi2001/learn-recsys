@@ -17,8 +17,10 @@ class MovieItem:
         return f'Name: {self.name}. Genre: {", ".join(self.genres)}'
 
 class MatrixFactorizationInference:
-    def __init__(self, embedding_dims, num_users, num_items, num_occupations, num_genres):
+    def __init__(self, embedding_dims, num_users, num_items, num_occupations, num_genres, path: str=None):
         self.model = MatrixFactorization(embedding_dims, num_users, num_items, num_occupations, num_genres)
+        if path is not None:
+            self.model.load_state_dict(torch.load(path))
 
         self.df = pd.read_csv('csv_file/user_item_genre_occupation.csv')
         self.idx2occ = [
@@ -97,8 +99,9 @@ def main(args):
     data = LitDataModule(ML100KImproved("./csv_file"), batch_size=args.batch_size, num_workers=24)
     data.setup()
     inference = MatrixFactorizationInference(embedding_dims=args.embedding_dims,  
-        num_users=data.num_users, num_items=data.num_items, num_occupations=data.num_occupations, num_genres = data.num_genres)
-    user_id = 1
+        num_users=data.num_users, num_items=data.num_items, num_occupations=data.num_occupations, num_genres = data.num_genres,
+        path=args.path)
+    user_id = args.user_id
     movies = inference.inference(user_id, data.num_items)
     with open(f'user_{user_id}_rcd.txt', 'w+') as file:
         for movie in movies:
@@ -108,6 +111,8 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--embedding_dims", type=int, default=30)
     parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--user_id", type=int, default=1)
+    parser.add_argument("--path", type=str, default="models/our.pt")
     args = parser.parse_args()
     main(args)
         

@@ -85,7 +85,7 @@ class MatrixFactorizationInference:
             genre_ids = self.find_genre(item_id + 1).unsqueeze(0)
             item_id_tensor = torch.tensor([item_id])
             rating = self.model(user_id, item_id_tensor, occ_id, genre_ids).item()
-            if self.within_range(rating, 3):
+            if self.within_range(rating, 4):
                 rcd_ids.append(item_id + 1)
         
         movies = []

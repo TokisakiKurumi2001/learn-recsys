@@ -44,12 +44,11 @@ class MatrixFactorization(nn.Module):
         self.item_bias = nn.Embedding(num_items, 1, sparse=sparse)                   # bias P
         self.occupation_embedding = nn.Embedding(num_occupations, embedding_dims, sparse=sparse) 
         self.occupation_bias = nn.Embedding(num_occupations, 1, sparse=sparse)
-        
 
-        # create many genre embeddings for item
-        # Approach: sum(many embeddings) for one item
-        # Approach: mean //
-        # Approach:  unknown and other as embeddings
+        # # create many genre embeddings for item
+        # # Approach: sum(many embeddings) for one item
+        # # Approach: mean //
+        # # Approach:  unknown and other as embeddings
         
         self.genre_embedding = EmbeddingMulti(num_genres, embedding_dims, sparse=sparse)
         self.genre_bias = EmbeddingMulti(num_genres, 1, sparse=sparse)
@@ -71,7 +70,9 @@ class MatrixFactorization(nn.Module):
         bg = self.genre_bias(genre).flatten()
         return (Q*I).sum(-1) + (O*Q).sum(-1) + (I*G).sum(-1) + bq + bi + bo + bg
 
-
+    def inference(self, user_id):
+        Q = self.user_embedding(user_id)
+        bq = self.user_bias(user_id).flatten()
 
 
 class LitMF(LitModel):
@@ -95,23 +96,25 @@ def main(args):
 
     data = LitDataModule(ML100KImproved("./csv_file"), batch_size=args.batch_size, num_workers=24)
     data.setup()
-    model = LitMF(MatrixFactorization, embedding_dims=args.embedding_dims,  
-        num_users=data.num_users, num_items=data.num_items, num_occupations=data.num_occupations, num_genres = data.num_genres, sparse=False
-        )
+    # model = LitMF(MatrixFactorization, embedding_dims=args.embedding_dims,  
+    #     num_users=data.num_users, num_items=data.num_items, num_occupations=data.num_occupations, num_genres = data.num_genres, sparse=False
+    #     )
+    print(data.num_users)
+    print(data.num_items)
     
     # wandb_logger = WandbLogger(project="proj_dummy")
-    wandb_logger = WandbLogger(project="proj_recsys")
-    trainer = pl.Trainer.from_argparse_args(
-        args,
-        devices=2,
-        accelerator="gpu",
-        strategy="ddp",
-        max_epochs=30,
-        logger=wandb_logger)
+    # wandb_logger = WandbLogger(name="occ_genre_b", project="proj_recsys")
+    # trainer = pl.Trainer.from_argparse_args(
+    #     args,
+    #     devices=[0],
+    #     accelerator="gpu",
+    #     strategy="ddp",
+    #     max_epochs=30,
+    #     logger=wandb_logger)
 
-    train_dataloader = data.train_dataloader()
-    valid_dataloader = data.val_dataloader()
-    trainer.fit(model=model, train_dataloaders=train_dataloader, val_dataloaders=valid_dataloader)
+    # train_dataloader = data.train_dataloader()
+    # valid_dataloader = data.val_dataloader()
+    # trainer.fit(model=model, train_dataloaders=train_dataloader, val_dataloaders=valid_dataloader)
 
 
 
